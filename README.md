@@ -126,6 +126,29 @@ This is enabled by the **incremental source generator** (`TailwindVariants.Sourc
 
 ---
 
+
+## Safelist Export
+
+You can export descriptor-declared Tailwind tokens for Tailwind content scanning:
+
+```csharp
+using TailwindVariants.NET.Export;
+
+var tokens = TvSafelistExporter.GetTokens(
+    Button.Descriptor,
+    Alert.Descriptor);
+
+var safelist = TvSafelistExporter.GetString(
+    Button.Descriptor,
+    Alert.Descriptor);
+
+await File.WriteAllTextAsync("tailwindvariants.safelist.txt", safelist);
+```
+
+The exporter reads statically declared class strings from descriptors, always deduplicates tokens, and sorts tokens by default for deterministic output. It does not run TailwindMerge and does not serialize descriptors.
+
+---
+
 ## Documentation
 
 Go to the [documentation](http://tailwindvariants-net-docs.denny093.dev/) for the full explanation of the example

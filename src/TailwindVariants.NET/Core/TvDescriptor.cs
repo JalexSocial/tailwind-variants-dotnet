@@ -1,3 +1,4 @@
+using TailwindVariants.NET.Export;
 using TailwindVariants.NET.Models;
 
 using static TailwindVariants.NET.TvHelpers;
@@ -36,7 +37,7 @@ public interface ITvDescriptor
 /// </summary>
 /// <typeparam name="TOwner">The type that owns the slots and variants.</typeparam>
 /// <typeparam name="TSlots">The type representing the slots, which must implement <see cref="ISlots"/>.</typeparam>
-public sealed class TvDescriptor<TOwner, TSlots> : ITvDescriptor
+public sealed class TvDescriptor<TOwner, TSlots> : ITvDescriptor, ITvSafelistSource
 	where TSlots : ISlots, new()
 	where TOwner : ISlottable<TSlots>
 {
@@ -113,6 +114,64 @@ public sealed class TvDescriptor<TOwner, TSlots> : ITvDescriptor
 	/// This collection is populated during initialization by compiling variant expressions and merging with extended variants.
 	/// </summary>
 	IReadOnlyCollection<ICompiledVariant>? ITvDescriptor.Variants => _variants;
+
+
+	IEnumerable<string?> ITvSafelistSource.GetSafelistClassStrings()
+	{
+		if (Base is not null)
+		{
+			yield return Base.ToString();
+		}
+
+		if (Slots is not null)
+		{
+			foreach (var (_, classValue) in Slots)
+			{
+				yield return classValue.ToString();
+			}
+		}
+
+		if (Variants is not null)
+		{
+			foreach (var (_, variant) in Variants)
+			{
+				if (variant is not System.Collections.IEnumerable enumerableVariant)
+				{
+					continue;
+				}
+
+				foreach (var item in enumerableVariant)
+				{
+					var valueProperty = item?.GetType().GetProperty("Value");
+					if (valueProperty?.GetValue(item) is not SlotCollection<TSlots> slotClasses)
+					{
+						continue;
+					}
+
+					foreach (var (_, classValue) in slotClasses)
+					{
+						yield return classValue.ToString();
+					}
+				}
+			}
+		}
+
+		if (CompoundVariants is not null)
+		{
+			foreach (var compound in CompoundVariants)
+			{
+				if (compound.Class is not null)
+				{
+					yield return compound.Class;
+				}
+
+				foreach (var (_, classValue) in compound)
+				{
+					yield return classValue.ToString();
+				}
+			}
+		}
+	}
 
 	#endregion Explicit Implementations
 
